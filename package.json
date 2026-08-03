@@ -20,12 +20,12 @@
         "vue-tsc": "^3.3.9"
     },
     "dependencies": {
+        "@lucide/vue": "^1.28.0",
         "@vueuse/core": "^14.4.0",
         "@vueuse/motion": "^3.0.3",
         "chart.js": "^4.5.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
-        "lucide-vue-next": "^1.0.0",
         "pinia": "^4.0.2",
         "radix-vue": "^1.9.17",
         "reka-ui": "^2.10.1",

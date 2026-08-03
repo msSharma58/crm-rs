@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Download, BarChart3, TrendingUp } from 'lucide-vue-next';
+import { Download, BarChart3, TrendingUp } from '@lucide/vue';
 import { apiGet } from '@/lib/api';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import Card from '@/components/ui/Card.vue';

@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft } from '@lucide/vue';
 import { apiGet } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import type { Project } from '@/types';

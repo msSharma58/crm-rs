@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { List } from 'lucide-vue-next';
+import { List } from '@lucide/vue';
 import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES } from '@/types/lead';
 import { formatCurrency } from '@/lib/utils';

@@ -107,7 +107,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Plus, Kanban } from 'lucide-vue-next';
+import { Plus, Kanban } from '@lucide/vue';
 import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from '@/types/lead';
 import { formatDate } from '@/lib/utils';

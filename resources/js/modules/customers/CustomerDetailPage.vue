@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft } from '@lucide/vue';
 import { apiGet } from '@/lib/api';
 import type { Customer } from '@/types';
 import PageHeader from '@/components/shared/PageHeader.vue';

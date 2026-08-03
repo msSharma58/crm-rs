@@ -142,7 +142,7 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
-import { Users, TrendingUp, DollarSign, Flame } from 'lucide-vue-next';
+import { Users, TrendingUp, DollarSign, Flame } from '@lucide/vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import { apiGet } from '@/lib/api';
 import PageHeader from '@/components/shared/PageHeader.vue';

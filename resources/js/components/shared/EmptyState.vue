@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { Inbox } from 'lucide-vue-next';
+import { Inbox } from '@lucide/vue';
 import type { Component } from 'vue';
 
 withDefaults(defineProps<{

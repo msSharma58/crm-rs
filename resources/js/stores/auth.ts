@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { apiGet, apiPost, getApiError, getCsrfCookie } from '@/lib/api';
+import { apiGet, apiPost, getApiError } from '@/lib/api';
 import type { LoginResponse, User } from '@/types';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -19,7 +19,6 @@ export const useAuthStore = defineStore('auth', () => {
     async function login(email: string, password: string): Promise<void> {
         loading.value = true;
         try {
-            await getCsrfCookie();
             const response = await apiPost<LoginResponse>('/auth/login', {
                 email,
                 password,

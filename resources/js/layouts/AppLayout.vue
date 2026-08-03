@@ -110,7 +110,7 @@ import {
     PhoneForwarded, CheckSquare, BookOpen, CreditCard, FileText,
     Megaphone, BarChart3, Settings, Search, Bell, Sun, Moon,
     ChevronDown, LogOut, Kanban,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useThemeStore } from '@/stores/theme';
 import Avatar from '@/components/ui/Avatar.vue';

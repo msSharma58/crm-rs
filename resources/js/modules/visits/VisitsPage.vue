@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { Plus } from 'lucide-vue-next';
+import { Plus } from '@lucide/vue';
 import { apiGet, apiPost } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import type { Visit, Paginated, PaginationMeta } from '@/types';
