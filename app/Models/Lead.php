@@ -31,6 +31,9 @@ class Lead extends Model
         'preferred_property',
         'project_id',
         'source',
+        'external_provider',
+        'external_id',
+        'integration_meta',
         'campaign_id',
         'status',
         'assigned_to',
@@ -50,6 +53,7 @@ class Lead extends Model
             'source' => LeadSource::class,
             'priority' => LeadPriority::class,
             'ai_score' => 'integer',
+            'integration_meta' => 'array',
             'last_contacted_at' => 'datetime',
             'converted_at' => 'datetime',
         ];
@@ -110,5 +114,10 @@ class Lead extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(IntegrationMessage::class);
     }
 }

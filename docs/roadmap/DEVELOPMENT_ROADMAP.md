@@ -32,8 +32,8 @@
 - Sales forecast
 
 ## Phase 4 — Scale
-- Facebook Lead Ads live sync
-- WhatsApp Business Cloud
+- Facebook Lead Ads live sync ✅
+- WhatsApp Business Cloud ✅
 - Multi-branch advanced
 - Billing / subscriptions for SaaS
 - Mobile apps (optional)

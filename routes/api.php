@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\FollowUpController;
+use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrganizationController;
@@ -23,11 +24,19 @@ use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\VisitController;
+use App\Http\Controllers\Api\V1\Webhooks\FacebookWebhookController;
+use App\Http\Controllers\Api\V1\Webhooks\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::middleware('throttle:api')->group(function (): void {
         Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+
+        // Meta webhooks (no auth — verified via hub.verify_token / app secret)
+        Route::get('webhooks/facebook', [FacebookWebhookController::class, 'verify']);
+        Route::post('webhooks/facebook', [FacebookWebhookController::class, 'handle'])->middleware('throttle:300,1');
+        Route::get('webhooks/whatsapp', [WhatsAppWebhookController::class, 'verify']);
+        Route::post('webhooks/whatsapp', [WhatsAppWebhookController::class, 'handle'])->middleware('throttle:300,1');
 
         Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
             Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -93,6 +102,12 @@ Route::prefix('v1')->group(function (): void {
             Route::get('notifications', [NotificationController::class, 'index']);
             Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
             Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
+            Route::get('integrations', [IntegrationController::class, 'index']);
+            Route::put('integrations/{provider}', [IntegrationController::class, 'upsert']);
+            Route::post('integrations/facebook/sync-form', [IntegrationController::class, 'syncFacebookForm']);
+            Route::get('leads/{lead}/messages', [IntegrationController::class, 'leadMessages']);
+            Route::post('leads/{lead}/whatsapp', [IntegrationController::class, 'sendWhatsApp']);
         });
     });
 });
