@@ -3,11 +3,9 @@
         <PageHeader title="Leads" description="Manage and track your sales leads">
             <template #actions>
                 <Button variant="outline" @click="router.push('/leads/board')">
-                    <Kanban class="h-4 w-4" />
                     Board View
                 </Button>
                 <Button @click="showCreate = true">
-                    <Plus class="h-4 w-4" />
                     New Lead
                 </Button>
             </template>
@@ -53,7 +51,7 @@
                 <td class="px-4 py-3 text-muted-foreground">{{ formatDate(lead.created_at) }}</td>
             </template>
             <template #empty>
-                <Button @click="showCreate = true"><Plus class="h-4 w-4" /> New Lead</Button>
+                <Button @click="showCreate = true">New Lead</Button>
             </template>
         </DataTable>
 
@@ -107,7 +105,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Plus, Kanban } from '@lucide/vue';
 import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from '@/types/lead';
 import { formatDate } from '@/lib/utils';

@@ -21,9 +21,12 @@
                         <button
                             type="button"
                             class="rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                            aria-label="Close"
                             @click="$emit('close')"
                         >
-                            <X class="h-4 w-4" />
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                         </button>
                     </div>
                     <slot />
@@ -38,7 +41,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { X } from '@lucide/vue';
 
 const props = withDefaults(defineProps<{
     open: boolean;

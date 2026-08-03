@@ -49,9 +49,17 @@ const columns: TableColumn[] = [
 async function fetch(page = 1): Promise<void> {
     loading.value = true;
     try {
-        const response = await apiGet<Paginated<Project>>('/projects', { params: { page, per_page: 15 } });
-        projects.value = response.data;
-        pagination.value = response.meta;
+        const response = await apiGet<Paginated<Project> | Project[]>('/projects', { params: { page, per_page: 15 } });
+        if (Array.isArray(response)) {
+            projects.value = response;
+            pagination.value = null;
+        } else {
+            projects.value = Array.isArray(response?.data) ? response.data : [];
+            pagination.value = response?.meta ?? null;
+        }
+    } catch {
+        projects.value = [];
+        pagination.value = null;
     } finally {
         loading.value = false;
     }

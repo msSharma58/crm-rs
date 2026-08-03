@@ -30,9 +30,17 @@ export const useLeadsStore = defineStore('leads', () => {
         loading.value = true;
         try {
             const params = { ...filters.value, page, per_page: 15 };
-            const response = await apiGet<Paginated<Lead>>('/leads', { params });
-            leads.value = response.data;
-            pagination.value = response.meta;
+            const response = await apiGet<Paginated<Lead> | Lead[]>('/leads', { params });
+            if (Array.isArray(response)) {
+                leads.value = response;
+                pagination.value = null;
+            } else {
+                leads.value = Array.isArray(response?.data) ? response.data : [];
+                pagination.value = response?.meta ?? null;
+            }
+        } catch {
+            leads.value = [];
+            pagination.value = null;
         } finally {
             loading.value = false;
         }
@@ -41,7 +49,10 @@ export const useLeadsStore = defineStore('leads', () => {
     async function fetchBoard(): Promise<void> {
         boardLoading.value = true;
         try {
-            board.value = await apiGet<BoardColumn[]>('/leads/board');
+            const response = await apiGet<BoardColumn[]>('/leads/board');
+            board.value = Array.isArray(response) ? response : [];
+        } catch {
+            board.value = [];
         } finally {
             boardLoading.value = false;
         }
