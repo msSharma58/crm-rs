@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\LeadStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignResource;
 use App\Models\Campaign;
@@ -15,6 +16,14 @@ class CampaignController extends Controller
     public function index(Request $request): JsonResponse
     {
         $campaigns = Campaign::query()
+            ->withCount([
+                'leads',
+                'leads as converted_leads_count' => fn ($q) => $q->whereIn('status', [
+                    LeadStatus::Sold->value,
+                    LeadStatus::Booking->value,
+                    LeadStatus::PaymentPending->value,
+                ]),
+            ])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->latest()
             ->paginate((int) $request->get('per_page', 15));
@@ -36,13 +45,29 @@ class CampaignController extends Controller
             'status' => ['nullable', 'string'],
         ]);
 
-        $campaign = Campaign::create($data);
+        $campaign = Campaign::create($data)->loadCount([
+            'leads',
+            'leads as converted_leads_count' => fn ($q) => $q->whereIn('status', [
+                LeadStatus::Sold->value,
+                LeadStatus::Booking->value,
+                LeadStatus::PaymentPending->value,
+            ]),
+        ]);
 
         return $this->success(new CampaignResource($campaign), 'Campaign created', 201);
     }
 
     public function show(Campaign $campaign): JsonResponse
     {
+        $campaign->loadCount([
+            'leads',
+            'leads as converted_leads_count' => fn ($q) => $q->whereIn('status', [
+                LeadStatus::Sold->value,
+                LeadStatus::Booking->value,
+                LeadStatus::PaymentPending->value,
+            ]),
+        ]);
+
         return $this->success(new CampaignResource($campaign));
     }
 
@@ -59,7 +84,29 @@ class CampaignController extends Controller
         ]);
 
         $campaign->update($data);
+        $campaign->loadCount([
+            'leads',
+            'leads as converted_leads_count' => fn ($q) => $q->whereIn('status', [
+                LeadStatus::Sold->value,
+                LeadStatus::Booking->value,
+                LeadStatus::PaymentPending->value,
+            ]),
+        ]);
 
-        return $this->success(new CampaignResource($campaign->fresh()), 'Campaign updated');
+        return $this->success(new CampaignResource($campaign), 'Campaign updated');
+    }
+
+    public function roi(Campaign $campaign): JsonResponse
+    {
+        $campaign->loadCount([
+            'leads',
+            'leads as converted_leads_count' => fn ($q) => $q->whereIn('status', [
+                LeadStatus::Sold->value,
+                LeadStatus::Booking->value,
+                LeadStatus::PaymentPending->value,
+            ]),
+        ]);
+
+        return $this->success(new CampaignResource($campaign));
     }
 }

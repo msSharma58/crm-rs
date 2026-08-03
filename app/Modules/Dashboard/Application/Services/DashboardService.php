@@ -37,12 +37,17 @@ final class DashboardService
             ->groupBy('status')
             ->pluck('count', 'status');
 
+        $bySource = Lead::select('source', DB::raw('count(*) as count'))
+            ->groupBy('source')
+            ->pluck('count', 'source');
+
         return [
             'total' => $total,
             'new_this_month' => $newThisMonth,
             'converted' => $converted,
             'conversion_rate' => $total > 0 ? round(($converted / $total) * 100, 2) : 0,
             'by_status' => $byStatus,
+            'by_source' => $bySource,
             'hot_leads' => Lead::where('priority', 'urgent')
                 ->whereNotIn('status', [LeadStatus::Sold->value, LeadStatus::Lost->value, LeadStatus::Cancelled->value])
                 ->count(),

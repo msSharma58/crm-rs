@@ -60,6 +60,8 @@ import { List } from '@lucide/vue';
 import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES } from '@/types/lead';
 import { formatCurrency } from '@/lib/utils';
+import { getApiError } from '@/lib/api';
+import { useToast } from '@/composables/useToast';
 import type { Lead } from '@/types';
 import type { LeadStatus } from '@/types/lead';
 import PageHeader from '@/components/shared/PageHeader.vue';
@@ -69,6 +71,7 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner.vue';
 
 const router = useRouter();
 const leadsStore = useLeadsStore();
+const toast = useToast();
 const draggingId = ref<number | null>(null);
 let draggedLead: Lead | null = null;
 
@@ -87,7 +90,11 @@ function onDragStart(_event: DragEvent, lead: Lead): void {
 
 async function onDrop(_event: DragEvent, status: LeadStatus): Promise<void> {
     if (!draggedLead || draggedLead.status === status) return;
-    await leadsStore.updateStatus(draggedLead.id, status);
+    try {
+        await leadsStore.updateStatus(draggedLead.id, status);
+    } catch (e) {
+        toast.error(getApiError(e));
+    }
     draggedLead = null;
     draggingId.value = null;
 }

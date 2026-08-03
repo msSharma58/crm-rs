@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CustomerFamilyMemberResource;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use App\Models\CustomerFamilyMember;
 use App\Modules\Customers\Application\Services\CustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -84,5 +86,51 @@ class CustomerController extends Controller
         $this->customerService->delete($customer);
 
         return $this->success(null, 'Customer deleted');
+    }
+
+    public function addFamilyMember(Request $request, Customer $customer): JsonResponse
+    {
+        $this->authorize('update', $customer);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'relation' => ['nullable', 'string', 'max:100'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $member = $this->customerService->addFamilyMember($customer, $data);
+
+        return $this->success(new CustomerFamilyMemberResource($member), 'Family member added', 201);
+    }
+
+    public function updateFamilyMember(
+        Request $request,
+        Customer $customer,
+        CustomerFamilyMember $familyMember,
+    ): JsonResponse {
+        $this->authorize('update', $customer);
+
+        abort_unless((int) $familyMember->customer_id === (int) $customer->id, 404);
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'relation' => ['nullable', 'string', 'max:100'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $member = $this->customerService->updateFamilyMember($familyMember, $data);
+
+        return $this->success(new CustomerFamilyMemberResource($member), 'Family member updated');
+    }
+
+    public function removeFamilyMember(Customer $customer, CustomerFamilyMember $familyMember): JsonResponse
+    {
+        $this->authorize('update', $customer);
+
+        abort_unless((int) $familyMember->customer_id === (int) $customer->id, 404);
+
+        $this->customerService->removeFamilyMember($familyMember);
+
+        return $this->success(null, 'Family member removed');
     }
 }

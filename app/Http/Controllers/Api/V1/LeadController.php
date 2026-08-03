@@ -77,12 +77,16 @@ class LeadController extends Controller
 
         $board = $this->leadService->boardByStatus();
 
-        return $this->success(
-            $board->map(fn ($leads, $status) => [
-                'status' => $status,
-                'leads' => LeadResource::collection($leads),
-            ])->values()
-        );
+        $columns = collect(LeadStatus::cases())->map(function (LeadStatus $status) use ($board) {
+            $leads = $board->get($status->value, collect());
+
+            return [
+                'status' => $status->value,
+                'leads' => LeadResource::collection($leads)->resolve(),
+            ];
+        })->values();
+
+        return $this->success($columns);
     }
 
     public function updateStatus(UpdateLeadStatusRequest $request, Lead $lead): JsonResponse

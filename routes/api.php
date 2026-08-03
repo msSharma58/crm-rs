@@ -43,6 +43,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('leads/{lead}/convert', [LeadController::class, 'convert']);
             Route::apiResource('leads', LeadController::class);
 
+            Route::post('customers/{customer}/family', [CustomerController::class, 'addFamilyMember']);
+            Route::put('customers/{customer}/family/{familyMember}', [CustomerController::class, 'updateFamilyMember']);
+            Route::delete('customers/{customer}/family/{familyMember}', [CustomerController::class, 'removeFamilyMember']);
             Route::apiResource('customers', CustomerController::class);
 
             Route::apiResource('projects', ProjectController::class);
@@ -64,10 +67,12 @@ Route::prefix('v1')->group(function (): void {
             Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel']);
             Route::apiResource('bookings', BookingController::class)->except(['update', 'destroy']);
 
+            Route::get('payments/outstanding', [PaymentController::class, 'outstanding']);
             Route::post('payments/{payment}/refund', [PaymentController::class, 'refund']);
             Route::apiResource('payments', PaymentController::class)->except(['update', 'destroy']);
 
             Route::apiResource('documents', DocumentController::class)->except(['update']);
+            Route::get('campaigns/{campaign}/roi', [CampaignController::class, 'roi']);
             Route::apiResource('campaigns', CampaignController::class)->except(['destroy']);
 
             Route::apiResource('users', UserController::class)->except(['destroy']);
