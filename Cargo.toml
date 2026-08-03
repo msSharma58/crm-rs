@@ -1,0 +1,21 @@
+[package]
+name = "crm-rs"
+version = "0.1.0"
+edition = "2021"
+description = "A minimal CRM (Customer Relationship Management) web application written in Rust"
+license = "MIT"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.31", features = ["bundled"] }
+tower-http = { version = "0.5", features = ["fs", "trace", "cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+# Local test client only hits the app over plain HTTP, so we disable the
+# default native-tls (OpenSSL) backend to avoid a system OpenSSL dependency.
+reqwest = { version = "0.12", default-features = false, features = ["json"] }

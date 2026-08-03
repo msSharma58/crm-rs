@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>crm-rs · Contacts</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #273449;
+      --accent: #6366f1;
+      --accent-2: #818cf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #334155;
+      --ok: #22c55e;
+      --lead: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 20px; margin: 0; }
+    header .badge {
+      background: var(--accent);
+      color: white;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 32px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    h2 { font-size: 15px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    label { display: block; font-size: 13px; margin: 12px 0 4px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    textarea { resize: vertical; min-height: 60px; }
+    button {
+      margin-top: 16px;
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-2); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .status { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .status.customer { background: rgba(34,197,94,.15); color: var(--ok); }
+    .status.lead { background: rgba(245,158,11,.15); color: var(--lead); }
+    .del { background: transparent; color: var(--muted); width: auto; margin: 0; padding: 4px 8px; font-size: 12px; }
+    .del:hover { color: #f87171; background: transparent; }
+    .empty { color: var(--muted); padding: 24px 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>crm-rs</h1>
+    <span class="badge">Rust + Axum</span>
+  </header>
+  <main>
+    <section class="card">
+      <h2>New contact</h2>
+      <form id="contact-form">
+        <label for="name">Name *</label>
+        <input id="name" name="name" required placeholder="Ada Lovelace" />
+        <label for="email">Email *</label>
+        <input id="email" name="email" type="email" required placeholder="ada@example.com" />
+        <label for="company">Company</label>
+        <input id="company" name="company" placeholder="Analytical Engines Ltd" />
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" placeholder="+1 555 0100" />
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="lead">Lead</option>
+          <option value="customer">Customer</option>
+        </select>
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" placeholder="Met at RustConf..."></textarea>
+        <button type="submit">Add contact</button>
+      </form>
+    </section>
+    <section class="card">
+      <h2>Contacts</h2>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Company</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="contacts-body"></tbody>
+      </table>
+      <div id="empty" class="empty" style="display:none;">No contacts yet — add your first one.</div>
+    </section>
+  </main>
+
+  <script>
+    const api = (path, opts) => fetch(`/api${path}`, opts).then(r => r.ok ? (r.status === 204 ? null : r.json()) : Promise.reject(r));
+
+    async function load() {
+      const contacts = await api('/contacts');
+      const body = document.getElementById('contacts-body');
+      const empty = document.getElementById('empty');
+      body.innerHTML = '';
+      empty.style.display = contacts.length ? 'none' : 'block';
+      for (const c of contacts) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(c.name)}</td>
+          <td>${escapeHtml(c.email)}</td>
+          <td>${escapeHtml(c.company || '—')}</td>
+          <td><span class="status ${c.status}">${escapeHtml(c.status)}</span></td>
+          <td><button class="del" data-id="${c.id}">Delete</button></td>`;
+        body.appendChild(tr);
+      }
+      body.querySelectorAll('.del').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          await api(`/contacts/${btn.dataset.id}`, { method: 'DELETE' });
+          load();
+        })
+      );
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        name: form.name.value,
+        email: form.email.value,
+        company: form.company.value || null,
+        phone: form.phone.value || null,
+        status: form.status.value,
+        notes: form.notes.value || null,
+      };
+      await api('/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      form.reset();
+      load();
+    });
+
+    load();
+  </script>
+</body>
+</html>
