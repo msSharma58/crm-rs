@@ -45,6 +45,9 @@ export interface Lead {
     budget: number | null;
     preferred_property: string | null;
     source: string | null;
+    external_provider?: string | null;
+    external_id?: string | null;
+    integration_meta?: Record<string, unknown> | null;
     status: import('./lead').LeadStatus;
     priority: string | null;
     ai_score: number | null;
@@ -62,10 +65,41 @@ export interface Lead {
 export interface LeadActivity {
     id: number;
     type: string;
+    title?: string | null;
     description: string;
-    meta: Record<string, unknown> | null;
+    properties?: Record<string, unknown> | null;
+    meta?: Record<string, unknown> | null;
     created_at: string | null;
     user?: User;
+}
+
+export interface IntegrationSetting {
+    id: number;
+    provider: 'facebook' | 'whatsapp' | string;
+    is_active: boolean;
+    settings: Record<string, unknown>;
+    webhook_verify_token: string | null;
+    has_page_access_token: boolean;
+    has_access_token: boolean;
+    last_synced_at: string | null;
+    webhook_url: string;
+    updated_at: string | null;
+}
+
+export interface IntegrationMessage {
+    id: number;
+    lead_id: number | null;
+    provider: string;
+    direction: 'inbound' | 'outbound' | string;
+    channel: string;
+    external_id: string | null;
+    from_number: string | null;
+    to_number: string | null;
+    message_type: string;
+    body: string | null;
+    status: string;
+    sent_at: string | null;
+    created_at: string | null;
 }
 
 export interface FamilyMember {

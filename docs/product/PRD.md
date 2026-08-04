@@ -157,7 +157,7 @@ Must ship:
 10. Docker + CI skeleton
 11. Tilottama Homes seed data
 
-Deferred polish: deep AI, live Facebook sync, WhatsApp Business Cloud production wiring (interfaces + stubs only).
+Live Meta sync: Facebook Lead Ads webhooks + form backfill and WhatsApp Cloud inbound/outbound are wired via per-org integration settings. Deferred polish: deeper AI assistants.
 
 ## 10. Acceptance Criteria (MVP)
 

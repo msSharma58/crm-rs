@@ -127,12 +127,26 @@
 | POST | `/ai/suggest-follow-up` |
 | POST | `/ai/generate-message` |
 
-## Webhooks (inbound stubs)
+## Integrations (Meta)
 
-| Method | Path |
-|--------|------|
-| POST | `/webhooks/facebook/leads` |
-| POST | `/webhooks/whatsapp` |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/integrations` | Org Facebook/WhatsApp settings (tokens masked) |
+| PUT | `/integrations/{facebook\|whatsapp}` | Upsert credentials + activate |
+| POST | `/integrations/facebook/sync-form` | Backfill leads for a form ID |
+| GET | `/leads/{id}/messages` | WhatsApp conversation thread |
+| POST | `/leads/{id}/whatsapp` | Send WhatsApp Cloud text message |
+
+## Webhooks (live Meta)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/webhooks/facebook` | Meta hub.verify_token challenge |
+| POST | `/webhooks/facebook` | Facebook Lead Ads `leadgen` events (queued) |
+| GET | `/webhooks/whatsapp` | Meta hub.verify_token challenge |
+| POST | `/webhooks/whatsapp` | WhatsApp Cloud inbound messages/statuses (queued) |
+
+Configure page/phone credentials per organization in Settings. Platform defaults: `META_*` env vars.
 
 ## Rate Limiting
 

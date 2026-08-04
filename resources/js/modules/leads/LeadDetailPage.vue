@@ -16,6 +16,12 @@
                             <span v-if="lead.phone">{{ lead.phone }}</span>
                             <span v-if="lead.email">{{ lead.email }}</span>
                             <span v-if="lead.location">{{ lead.location }}</span>
+                            <span
+                                v-if="lead.external_provider"
+                                class="rounded-md bg-brand-500/10 px-2 py-0.5 text-xs font-medium capitalize text-brand-500"
+                            >
+                                {{ lead.external_provider }}
+                            </span>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
@@ -57,7 +63,7 @@
             </div>
 
             <div class="border-b border-border">
-                <nav class="flex gap-6">
+                <nav class="flex gap-6 overflow-x-auto">
                     <button
                         v-for="tab in tabs"
                         :key="tab.id"
@@ -83,11 +89,66 @@
                             <Activity class="h-4 w-4 text-brand-500" />
                         </div>
                         <div>
-                            <p class="text-sm text-foreground">{{ activity.description }}</p>
+                            <p class="text-sm font-medium text-foreground">{{ activity.title || activity.description }}</p>
+                            <p v-if="activity.title && activity.description" class="mt-1 text-sm text-muted-foreground">
+                                {{ activity.description }}
+                            </p>
                             <p class="mt-1 text-xs text-muted-foreground">{{ formatDateTime(activity.created_at) }}</p>
                         </div>
                     </div>
                     <p v-if="!lead.activities?.length" class="text-sm text-muted-foreground">No activity yet</p>
+                </div>
+
+                <div v-else-if="activeTab === 'whatsapp'" class="mx-auto max-w-2xl">
+                    <div class="flex h-[28rem] flex-col rounded-lg border border-border bg-card">
+                        <div class="border-b border-border px-4 py-3">
+                            <p class="text-sm font-medium">WhatsApp conversation</p>
+                            <p class="text-xs text-muted-foreground">{{ lead.phone || 'No phone on lead' }}</p>
+                        </div>
+                        <div ref="threadEl" class="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+                            <div v-if="loadingMessages" class="flex justify-center py-10">
+                                <LoadingSpinner class="h-6 w-6" />
+                            </div>
+                            <template v-else>
+                                <div
+                                    v-for="msg in messages"
+                                    :key="msg.id"
+                                    class="flex"
+                                    :class="msg.direction === 'outbound' ? 'justify-end' : 'justify-start'"
+                                >
+                                    <div
+                                        class="max-w-[80%] rounded-2xl px-3 py-2 text-sm"
+                                        :class="msg.direction === 'outbound'
+                                            ? 'bg-brand-500 text-white'
+                                            : 'bg-muted text-foreground'"
+                                    >
+                                        <p class="whitespace-pre-wrap">{{ msg.body }}</p>
+                                        <p
+                                            class="mt-1 text-[10px]"
+                                            :class="msg.direction === 'outbound' ? 'text-white/70' : 'text-muted-foreground'"
+                                        >
+                                            {{ formatDateTime(msg.sent_at ?? msg.created_at) }}
+                                            <span v-if="msg.status"> · {{ msg.status }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <p v-if="!messages.length" class="py-10 text-center text-sm text-muted-foreground">
+                                    No WhatsApp messages yet
+                                </p>
+                            </template>
+                        </div>
+                        <form class="flex gap-2 border-t border-border p-3" @submit.prevent="sendWhatsApp">
+                            <Input
+                                v-model="waDraft"
+                                class="flex-1"
+                                placeholder="Type a WhatsApp message…"
+                                :disabled="!lead.phone || sendingWa"
+                            />
+                            <Button type="submit" :loading="sendingWa" :disabled="!waDraft.trim() || !lead.phone">
+                                Send
+                            </Button>
+                        </form>
+                    </div>
                 </div>
 
                 <div v-else-if="activeTab === 'notes'">
@@ -113,19 +174,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, Activity } from '@lucide/vue';
 import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from '@/types/lead';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
-import { getApiError } from '@/lib/api';
+import { apiGet, apiPost, getApiError } from '@/lib/api';
 import { useToast } from '@/composables/useToast';
 import Select from '@/components/ui/Select.vue';
 import Button from '@/components/ui/Button.vue';
+import Input from '@/components/ui/Input.vue';
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
-import type { LeadStatus } from '@/types/lead';
+import type { IntegrationMessage, LeadStatus } from '@/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -137,11 +199,17 @@ const statusValue = ref('');
 const notesValue = ref('');
 const converting = ref(false);
 const savingNotes = ref(false);
+const messages = ref<IntegrationMessage[]>([]);
+const loadingMessages = ref(false);
+const sendingWa = ref(false);
+const waDraft = ref('');
+const threadEl = ref<HTMLElement | null>(null);
 
 const lead = computed(() => leadsStore.currentLead);
 
 const tabs = [
     { id: 'timeline', label: 'Timeline' },
+    { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'notes', label: 'Notes' },
     { id: 'tasks', label: 'Tasks' },
 ];
@@ -152,6 +220,49 @@ watch(lead, (l) => {
         notesValue.value = l.notes ?? '';
     }
 }, { immediate: true });
+
+watch(activeTab, async (tab) => {
+    if (tab === 'whatsapp' && lead.value) {
+        await loadMessages();
+    }
+});
+
+async function loadMessages(): Promise<void> {
+    if (!lead.value) return;
+    loadingMessages.value = true;
+    try {
+        messages.value = await apiGet<IntegrationMessage[]>(`/leads/${lead.value.id}/messages`);
+        await nextTick();
+        if (threadEl.value) {
+            threadEl.value.scrollTop = threadEl.value.scrollHeight;
+        }
+    } catch (e) {
+        toast.error(getApiError(e));
+    } finally {
+        loadingMessages.value = false;
+    }
+}
+
+async function sendWhatsApp(): Promise<void> {
+    if (!lead.value || !waDraft.value.trim()) return;
+    sendingWa.value = true;
+    try {
+        const sent = await apiPost<IntegrationMessage>(`/leads/${lead.value.id}/whatsapp`, {
+            message: waDraft.value.trim(),
+        });
+        messages.value = [...messages.value, sent];
+        waDraft.value = '';
+        await nextTick();
+        if (threadEl.value) {
+            threadEl.value.scrollTop = threadEl.value.scrollHeight;
+        }
+        toast.success('WhatsApp message sent');
+    } catch (e) {
+        toast.error(getApiError(e));
+    } finally {
+        sendingWa.value = false;
+    }
+}
 
 async function updateStatus(): Promise<void> {
     if (!lead.value) return;

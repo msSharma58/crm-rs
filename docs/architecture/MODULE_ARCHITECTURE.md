@@ -131,11 +131,11 @@ resources/js/
 
 ## 7. Integration Boundaries
 
-| Integration | Interface | MVP |
-|-------------|-----------|-----|
-| WhatsApp | `MessagingChannel` | Log/stub |
+| Integration | Interface | Status |
+|-------------|-----------|--------|
+| WhatsApp Cloud | `MessagingChannel` | Live webhook ingest + outbound send |
 | SMS | `MessagingChannel` | Stub |
-| Facebook Lead Ads | `LeadIngestor` | CSV + webhook stub |
+| Facebook Lead Ads | `LeadIngestor` | Live leadgen webhook + form backfill |
 | AI | `AiProvider` | Heuristic mock |
 | Storage | Laravel Filesystem | Local / S3-ready |
 | Payments gateway | N/A | Manual recording |
