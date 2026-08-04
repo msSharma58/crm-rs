@@ -25,7 +25,8 @@ Multi-tenant Enterprise Real Estate CRM — the operating system for lead-to-clo
 ## Quick start (local)
 
 ### Requirements
-- PHP 8.4+, Composer, Node 22+, MySQL 8, Redis
+- PHP 8.4+, Composer, Node 22+, MySQL 8
+- Redis (optional, recommended for production)
 
 ```bash
 cp .env.example .env
@@ -33,7 +34,7 @@ composer install
 npm install
 php artisan key:generate
 
-# Configure MySQL + Redis in .env, then:
+# Configure MySQL in .env (Redis is optional), then:
 php artisan migrate --seed
 npm run build
 php artisan serve
@@ -41,6 +42,22 @@ php artisan serve
 
 SPA: `http://localhost:8000`  
 API: `http://localhost:8000/api/v1`
+
+#### Optional: Enable Redis for Production
+
+For production environments, Redis is recommended for caching, sessions, and queues:
+
+```bash
+# Install phpredis extension
+sudo apt-get install php-redis  # Ubuntu/Debian
+# or
+brew install php-redis          # macOS
+
+# Update .env
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
 
 ### Docker
 
