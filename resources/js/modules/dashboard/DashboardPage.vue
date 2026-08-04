@@ -151,13 +151,14 @@ import Card from '@/components/ui/Card.vue';
 import StatusBadge from '@/components/shared/StatusBadge.vue';
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue';
 import { LEAD_STATUS_LABELS, type LeadStatus } from '@/types/lead';
-import type { FollowUp, Paginated } from '@/types';
+import type { FollowUp, LeadsReport, Paginated } from '@/types';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const dashboard = useDashboardStore();
 const todayFollowUps = ref<FollowUp[]>([]);
 const followUpsLoading = ref(false);
+const leadsBySource = ref<Record<string, number>>({});
 
 const chartData = computed(() => {
     if (!dashboard.kpis) return null;
@@ -187,20 +188,26 @@ const chartOptions = {
 };
 
 const topSources = computed(() => {
-    if (!dashboard.kpis) return [];
-    return Object.entries(dashboard.kpis.leads.by_status)
+    return Object.entries(leadsBySource.value)
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 });
 
+function isDueToday(dueAt: string | null): boolean {
+    if (!dueAt) return false;
+    const due = new Date(dueAt);
+    const today = new Date();
+    return due.toDateString() === today.toDateString();
+}
+
 async function fetchTodayFollowUps(): Promise<void> {
     followUpsLoading.value = true;
     try {
         const response = await apiGet<Paginated<FollowUp>>('/follow-ups', {
-            params: { status: 'pending', per_page: 5 },
+            params: { status: 'pending', per_page: 50 },
         });
-        todayFollowUps.value = response.data;
+        todayFollowUps.value = response.data.filter((fu) => isDueToday(fu.due_at));
     } catch {
         todayFollowUps.value = [];
     } finally {
@@ -208,8 +215,18 @@ async function fetchTodayFollowUps(): Promise<void> {
     }
 }
 
+async function fetchLeadsBySource(): Promise<void> {
+    try {
+        const report = await apiGet<LeadsReport>('/reports/leads');
+        leadsBySource.value = report.by_source ?? {};
+    } catch {
+        leadsBySource.value = {};
+    }
+}
+
 onMounted(async () => {
     await dashboard.fetchKpis();
     await fetchTodayFollowUps();
+    await fetchLeadsBySource();
 });
 </script>

@@ -53,6 +53,8 @@ final class CustomerService
 
     public function addFamilyMember(Customer $customer, array $data): CustomerFamilyMember
     {
+        $data['organization_id'] ??= $customer->organization_id;
+
         return $customer->familyMembers()->create($data);
     }
 

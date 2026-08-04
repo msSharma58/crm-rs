@@ -19,9 +19,20 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <Select v-model="statusValue" class="w-48" @change="updateStatus">
+                        <Select
+                            v-model="statusValue"
+                            class="w-48"
+                            @update:model-value="updateStatus"
+                        >
                             <option v-for="s in LEAD_STATUSES" :key="s" :value="s">{{ LEAD_STATUS_LABELS[s] }}</option>
                         </Select>
+                        <Button
+                            v-if="!lead.converted_at"
+                            :loading="converting"
+                            @click="handleConvert"
+                        >
+                            Convert to Customer
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -81,7 +92,15 @@
 
                 <div v-else-if="activeTab === 'notes'">
                     <div class="rounded-lg border border-border bg-card p-4">
-                        <p class="whitespace-pre-wrap text-sm text-foreground">{{ lead.notes || 'No notes added yet.' }}</p>
+                        <textarea
+                            v-model="notesValue"
+                            rows="6"
+                            class="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            placeholder="Add notes about this lead..."
+                        />
+                        <div class="mt-3 flex justify-end">
+                            <Button :loading="savingNotes" size="sm" @click="saveNotes">Save Notes</Button>
+                        </div>
                     </div>
                 </div>
 
@@ -100,7 +119,10 @@ import { ArrowLeft, Activity } from '@lucide/vue';
 import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from '@/types/lead';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { getApiError } from '@/lib/api';
+import { useToast } from '@/composables/useToast';
 import Select from '@/components/ui/Select.vue';
+import Button from '@/components/ui/Button.vue';
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import type { LeadStatus } from '@/types/lead';
@@ -108,9 +130,13 @@ import type { LeadStatus } from '@/types/lead';
 const route = useRoute();
 const router = useRouter();
 const leadsStore = useLeadsStore();
+const toast = useToast();
 
 const activeTab = ref('timeline');
 const statusValue = ref('');
+const notesValue = ref('');
+const converting = ref(false);
+const savingNotes = ref(false);
 
 const lead = computed(() => leadsStore.currentLead);
 
@@ -121,12 +147,47 @@ const tabs = [
 ];
 
 watch(lead, (l) => {
-    if (l) statusValue.value = l.status;
+    if (l) {
+        statusValue.value = l.status;
+        notesValue.value = l.notes ?? '';
+    }
 }, { immediate: true });
 
 async function updateStatus(): Promise<void> {
     if (!lead.value) return;
-    await leadsStore.updateStatus(lead.value.id, statusValue.value as LeadStatus);
+    try {
+        await leadsStore.updateStatus(lead.value.id, statusValue.value as LeadStatus);
+        toast.success('Status updated');
+    } catch (e) {
+        toast.error(getApiError(e));
+    }
+}
+
+async function saveNotes(): Promise<void> {
+    if (!lead.value) return;
+    savingNotes.value = true;
+    try {
+        await leadsStore.updateLead(lead.value.id, { notes: notesValue.value });
+        toast.success('Notes saved');
+    } catch (e) {
+        toast.error(getApiError(e));
+    } finally {
+        savingNotes.value = false;
+    }
+}
+
+async function handleConvert(): Promise<void> {
+    if (!lead.value) return;
+    converting.value = true;
+    try {
+        const customer = await leadsStore.convertLead(lead.value.id);
+        toast.success('Lead converted to customer');
+        router.push(`/customers/${customer.id}`);
+    } catch (e) {
+        toast.error(getApiError(e));
+    } finally {
+        converting.value = false;
+    }
 }
 
 onMounted(() => {

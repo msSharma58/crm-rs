@@ -21,7 +21,9 @@ class CustomerResource extends JsonResource
             'meta' => $this->meta,
             'lead_id' => $this->lead_id,
             'assignee' => new UserResource($this->whenLoaded('assignee')),
+            'lead' => new LeadResource($this->whenLoaded('lead')),
             'family_members' => CustomerFamilyMemberResource::collection($this->whenLoaded('familyMembers')),
+            'bookings' => BookingResource::collection($this->whenLoaded('bookings')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -68,6 +68,13 @@ export interface LeadActivity {
     user?: User;
 }
 
+export interface FamilyMember {
+    id: number;
+    name: string;
+    relation: string | null;
+    phone: string | null;
+}
+
 export interface Customer {
     id: number;
     name: string;
@@ -78,6 +85,9 @@ export interface Customer {
     meta: Record<string, unknown> | null;
     lead_id: number | null;
     assignee?: User;
+    lead?: Lead;
+    family_members?: FamilyMember[];
+    bookings?: Booking[];
     created_at: string | null;
     updated_at: string | null;
 }
@@ -206,7 +216,51 @@ export interface Campaign {
     starts_at: string | null;
     ends_at: string | null;
     status: string;
+    leads_count?: number;
+    converted_count?: number;
+    conversion_rate?: number;
+    cost_per_lead?: number;
+    budget_utilization?: number;
+    roi?: number | null;
     created_at: string | null;
+}
+
+export interface ReportsOverview {
+    total_leads: number;
+    total_bookings: number;
+    total_revenue: number;
+    conversion_rate: number;
+    leads: DashboardKpis['leads'];
+    sales: DashboardKpis['sales'];
+    operations: DashboardKpis['operations'];
+    inventory: DashboardKpis['inventory'];
+}
+
+export interface LeadsReport {
+    period: { from: string; to: string };
+    by_source: Record<string, number>;
+    by_status: Record<string, number>;
+    total: number;
+}
+
+export interface OutstandingPayments {
+    total_outstanding: number;
+    count: number;
+    items: Array<{
+        id: number;
+        label: string;
+        amount: number;
+        paid: number;
+        outstanding: number;
+        due_date: string | null;
+        status: string;
+        booking: {
+            id: number;
+            code: string;
+            customer?: { id: number; name: string; phone?: string };
+            unit?: { id: number; code: string };
+        } | null;
+    }>;
 }
 
 export interface DashboardKpis {

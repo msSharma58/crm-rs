@@ -2,6 +2,16 @@
     <div>
         <PageHeader title="Leads" description="Manage and track your sales leads">
             <template #actions>
+                <input
+                    ref="fileInput"
+                    type="file"
+                    accept=".csv,.txt"
+                    class="hidden"
+                    @change="handleImport"
+                />
+                <Button variant="outline" @click="fileInput?.click()">
+                    Import CSV
+                </Button>
                 <Button variant="outline" @click="router.push('/leads/board')">
                     Board View
                 </Button>
@@ -10,6 +20,10 @@
                 </Button>
             </template>
         </PageHeader>
+
+        <div v-if="fetchError" class="mb-4 rounded-lg border border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {{ fetchError }}
+        </div>
 
         <div class="mb-4 flex flex-wrap gap-3">
             <Input
@@ -109,6 +123,7 @@ import { useLeadsStore } from '@/stores/leads';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from '@/types/lead';
 import { formatDate } from '@/lib/utils';
 import { getApiError } from '@/lib/api';
+import { useToast } from '@/composables/useToast';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DataTable from '@/components/shared/DataTable.vue';
 import StatusBadge from '@/components/shared/StatusBadge.vue';
@@ -121,6 +136,7 @@ import type { TableColumn } from '@/components/ui/Table.vue';
 const router = useRouter();
 const route = useRoute();
 const leadsStore = useLeadsStore();
+const toast = useToast();
 
 const search = ref((route.query.search as string) ?? '');
 const statusFilter = ref('');
@@ -128,6 +144,8 @@ const priorityFilter = ref('');
 const showCreate = ref(false);
 const creating = ref(false);
 const createError = ref('');
+const fetchError = ref('');
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const form = reactive({
     name: '',
@@ -154,12 +172,17 @@ function debouncedFetch(): void {
 }
 
 async function fetch(page = 1): Promise<void> {
+    fetchError.value = '';
     leadsStore.setFilters({
         search: search.value || undefined,
         status: statusFilter.value || undefined,
         priority: priorityFilter.value || undefined,
     });
-    await leadsStore.fetchLeads(page);
+    try {
+        await leadsStore.fetchLeads(page);
+    } catch (e) {
+        fetchError.value = getApiError(e);
+    }
 }
 
 async function handleCreate(): Promise<void> {
@@ -168,11 +191,26 @@ async function handleCreate(): Promise<void> {
     try {
         await leadsStore.createLead(form);
         showCreate.value = false;
+        toast.success('Lead created');
         Object.assign(form, { name: '', phone: '', email: '', source: 'manual', priority: 'medium' });
     } catch (e) {
         createError.value = getApiError(e);
     } finally {
         creating.value = false;
+    }
+}
+
+async function handleImport(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+        await leadsStore.importCsv(file);
+        toast.success('CSV imported successfully');
+    } catch (e) {
+        toast.error(getApiError(e));
+    } finally {
+        input.value = '';
     }
 }
 

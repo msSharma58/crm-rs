@@ -6,7 +6,7 @@
             'flex h-9 w-full rounded-lg border border-border bg-card px-3 py-1 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
             props.class,
         )"
-        @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
+        @change="onChange"
     >
         <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
         <slot />
@@ -25,8 +25,14 @@ const props = withDefaults(defineProps<{
     modelValue: '',
 });
 
-defineEmits<{
+const emit = defineEmits<{
     'update:modelValue': [value: string];
-    change: [];
+    change: [value: string];
 }>();
+
+function onChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    emit('update:modelValue', value);
+    emit('change', value);
+}
 </script>
